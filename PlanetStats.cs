@@ -6,10 +6,13 @@ using Unity.Mathematics;
 using UnityEngine;
 using TMPro;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using static Buildings;
 
 public class PlanetStats : MonoBehaviour
 {
-    private TMP_Text text;
+        private PlanetStats planeta;
+        private TMP_Text targetText;
         public int id;
         public int owner_id;
         public string name_;
@@ -19,100 +22,86 @@ public class PlanetStats : MonoBehaviour
         public int economy;
         public int pops;
         public int research;
-        string cored="";
-        string colonized="";
+        public string cored="";
+        public string colonized="";
         public bool is_selected;
+        public string targetTag = "planet_stats";
+        public bool is_in_list = false;
+        public List<IBuilding> buildings_list = new List<IBuilding>();
     // Start is called before the first frame update
     void Start()
     {
-        text = FindObjectOfType<TMP_Text>();
+        Main.GetInstance().LoadPlanetNames();
+        GameObject text = GameObject.FindWithTag("planet_stats");
+        targetText = text.GetComponent<TMP_Text>();
         id = Int32.Parse(gameObject.name);
         owner_id = 0;
-        name_ = " ";
+        name_ = Main.GetInstance().GetRandomPlanetName();
         is_cored = false;
         is_colonized = false;
         food = UnityEngine.Random.Range(1,10);
         economy = UnityEngine.Random.Range(1, 10);
         pops = 0;
         research = 0;
-    }
+        Buildings.Farms farms_building = new Buildings.Farms();
+        Buildings.GlassFarm glassfarm_building = new Buildings.GlassFarm();
+        Buildings.Mine mine_building = new Buildings.Mine();
+        Buildings.Factory factory_building = new Buildings.Factory();
 
+        buildings_list.Add(farms_building);
+        buildings_list.Add(glassfarm_building);
+        buildings_list.Add(mine_building);
+        buildings_list.Add(factory_building);
+    }
+    void UpdatePlanetList()
+    {
+        Main mainScript = FindObjectOfType<Main>();
+        if (mainScript != null)
+        {
+            List<PlanetStats> allPlanets = mainScript.all_planets;
+
+            allPlanets.Add(this);
+        }
+    }
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyUp(KeyCode.Escape))
-        {
-            is_selected = false;
-        }
-        if (is_cored == true)
-        {
-            cored = "yes";
-        }
-        else if (is_cored == false)
+        if (is_cored == false)
         {
             cored = "no";
         }
-        if (is_colonized == true)
+        else
         {
-            colonized = "yes";
+            cored = "yes";
         }
-        else if (is_colonized == false)
+        if (is_colonized == false)
         {
             colonized = "no";
         }
-        if (is_selected == true)
+        else
         {
-            text.text = "Name: " + name_ + "\nFood: " + food + "\nEconomy: " + economy + "\nPopulation: " + pops + "\nResearch Value: " + research + "\nClaimed: " + cored + "\nColonized: " + colonized;
+            colonized = "yes";
+        }
+        if (Input.GetKeyUp(KeyCode.Escape))
+        {
+            is_selected = false;
         }
         if (Input.GetMouseButtonDown(0))
         {
             UnityEngine.Vector3 clickPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             UnityEngine.Vector2 clickPosition2D = new UnityEngine.Vector2(clickPosition.x, clickPosition.y);
 
-            // Wykonaj raycast, aby wykryæ klikniêcie na obiekcie.
             RaycastHit2D hit = Physics2D.Raycast(clickPosition2D, UnityEngine.Vector2.zero);
-            if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
+
+            if (hit.collider != null)
             {
-                if (hit.collider == null)
-
+                GameObject clickedObject = hit.collider.gameObject;
+                planeta = clickedObject.GetComponent<PlanetStats>();
+                if (planeta == null)
                 {
-
-                    is_selected = false;
-
-                    text.text = "";
-
+                    gameObject.tag = "Untagged";
                 }
-
-                else if (hit.collider != null)
-
-                {
-
-                    GameObject clickedObject = hit.collider.gameObject;
-
-                    PlanetStats yourScript = clickedObject.GetComponent<PlanetStats>();
-
-                    if (yourScript != null)
-
-                    {
-
-                        int idcheck = yourScript.id;
-
-                        if (id != idcheck)
-
-                        {
-
-                            is_selected = false;
-
-                        }
-
-                    }
-                } 
             }
         }
-
-    }
-    private void OnMouseDown()
-    {
-      is_selected = true;
     }
 }
